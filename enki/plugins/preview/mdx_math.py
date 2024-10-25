@@ -22,7 +22,7 @@ class MathExtension(markdown.extensions.Extension):
         }
         super(MathExtension, self).__init__(*args, **kwargs)
 
-    def extendMarkdown(self, md, md_globals):
+    def extendMarkdown(self, md):
         def handle_match_inline(m):
             node = markdown.util.etree.Element('script')
             node.set('type', 'math/tex')
@@ -49,12 +49,14 @@ class MathExtension(markdown.extensions.Extension):
         )
         if not self.getConfig('enable_dollar_delimiter'):
             inlinemathpatterns = inlinemathpatterns[1:]
+
+        PRIORITY_LT_ESCAPE = 185     # less priority than 'escape' (180), more than 'backtick' (190) ; NOTE: higher priority has lower numeric value
         for i, pattern in enumerate(inlinemathpatterns):
             pattern.handleMatch = handle_match_inline
-            md.inlinePatterns.add('math-inline-%d' % i, pattern, '<escape')
+            md.inlinePatterns.register('math-inline-%d' % i, pattern, PRIORITY_LT_ESCAPE)  # '<escape')
         for i, pattern in enumerate(mathpatterns):
             pattern.handleMatch = handle_match
-            md.inlinePatterns.add('math-%d' % i, pattern, '<escape')
+            md.inlinePatterns.register('math-%d' % i, pattern, PRIORITY_LT_ESCAPE)   # '<escape')
 
 
 def makeExtension(*args, **kwargs):

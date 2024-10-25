@@ -104,8 +104,12 @@ def _convertMarkdown(text):
     extensions = ['fenced_code', 'nl2br', 'tables', 'enki.plugins.preview.mdx_math']
 
     # version 2.0 supports only extension names, not instances
-    if markdown.version_info[0] > 2 or \
-       (markdown.version_info[0] == 2 and markdown.version_info[1] > 0):
+    try:
+        markdown_version_info = markdown.version_info
+    except AttributeError:
+        markdown_version_info = markdown.__version_info__
+    if markdown_version_info[0] > 2 or \
+       (markdown_version_info[0] == 2 and markdown_version_info[1] > 0):
 
         class _StrikeThroughExtension(markdown.Extension):
             """http://achinghead.com/python-markdown-adding-insert-delete.html
@@ -113,15 +117,16 @@ def _convertMarkdown(text):
             """
             DEL_RE = r'(~~)(.*?)~~'
 
-            def extendMarkdown(self, md, md_globals):
+            def extendMarkdown(self, md):
                 # Create the del pattern
                 delTag = markdown.inlinepatterns.SimpleTagPattern(self.DEL_RE, 'del')
                 # Insert del pattern into markdown parser
-                md.inlinePatterns.add('del', delTag, '>not_strong')
+                PRIORITY_GT_NOT_STRONG = 65     # more priority than 'not_strong' (70), less than 'em_strong' (60) ; NOTE: higher priority has lower numeric value
+                md.inlinePatterns.register('del', delTag, PRIORITY_GT_NOT_STRONG)  #'>not_strong')
 
         extensions.append(_StrikeThroughExtension())
 
-    return markdown.markdown(text, extensions)
+    return markdown.markdown(text, extensions=extensions)
 
 
 def _convertReST(text):
